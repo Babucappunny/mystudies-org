@@ -1,0 +1,11 @@
+name = "vidya"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "."
+
+# D1 binding used by every function in functions/api/*.js as `env.DB`.
+# `database_id` below is a placeholder -- replace it with the id printed by
+# `wrangler d1 create vidya-db` (see README.md "Deploying" section).
+[[d1_databases]]
+binding = "DB"
+database_name = "vidya-db"
+database_id = "REPLACE_WITH_YOUR_DATABASE_ID"

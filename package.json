@@ -1,0 +1,16 @@
+{
+  "name": "vidya-cloudflare",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "wrangler pages dev . --d1=DB=vidya-db --compatibility-date=2025-01-01",
+    "db:local:schema": "wrangler d1 execute vidya-db --local --file=./schema.sql",
+    "db:local:seed": "wrangler d1 execute vidya-db --local --file=./seed.sql",
+    "db:remote:schema": "wrangler d1 execute vidya-db --remote --file=./schema.sql",
+    "db:remote:seed": "wrangler d1 execute vidya-db --remote --file=./seed.sql",
+    "deploy": "wrangler pages deploy ."
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

@@ -1,0 +1,236 @@
+====================================================================
+DEPLOYMENT GUIDE
+Vidya Quiz App -> mystudies.org (Cloudflare Pages + D1 + GitHub)
+====================================================================
+
+This describes how to host the files in the "Vidya-cloudflare" folder
+so they are live at https://mystudies.org. It assumes:
+
+  - mystudies.org is already registered/managed in your Cloudflare
+    account (Cloudflare Registrar or DNS already active for it).
+  - You have (or will create) a GitHub account and a Cloudflare account
+    (the same Cloudflare account that owns the domain).
+  - Node.js is installed on your computer (needed only for the one-time
+    database setup commands in Steps 4-6; the live site itself needs
+    nothing installed).
+
+Nothing in this stack costs money at this app's scale: Cloudflare Pages
+and D1 both have generous free tiers.
+
+--------------------------------------------------------------------
+STEP 1 - Get the code into a GitHub repository
+--------------------------------------------------------------------
+1.1  Create a new empty repository on GitHub (github.com -> New
+     repository). Name it something like "vidya" or "mystudies-org".
+     Do not initialize it with a README (you already have one).
+
+1.2  On your computer, open a terminal in the "Vidya-cloudflare" folder
+     and run:
+
+         git init
+         git add .
+         git commit -m "Initial commit: Vidya quiz app"
+         git branch -M main
+         git remote add origin https://github.com/<your-username>/<your-repo>.git
+         git push -u origin main
+
+     Replace <your-username>/<your-repo> with the values from the repo
+     you created in Step 1.1.
+
+--------------------------------------------------------------------
+STEP 2 - Install and log in to Wrangler (Cloudflare's CLI)
+--------------------------------------------------------------------
+Wrangler is only needed for the database setup below; you do not need
+to install it globally, npx will fetch it automatically.
+
+2.1  In the same terminal, still inside "Vidya-cloudflare", run:
+
+         npx wrangler login
+
+     This opens a browser window asking you to authorize Wrangler
+     against your Cloudflare account (the one that owns mystudies.org).
+     Approve it.
+
+--------------------------------------------------------------------
+STEP 3 - Create the D1 database
+--------------------------------------------------------------------
+3.1  Run:
+
+         npx wrangler d1 create vidya-db
+
+3.2  Wrangler prints a block that includes a "database_id" (a UUID).
+     Copy that value.
+
+3.3  Open "wrangler.toml" in the project folder and replace the
+     placeholder:
+
+         database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+
+     with the real database_id from Step 3.2. Save the file.
+
+3.4  Commit and push this change:
+
+         git add wrangler.toml
+         git commit -m "Add D1 database id"
+         git push
+
+--------------------------------------------------------------------
+STEP 4 - Load the schema and data into D1
+--------------------------------------------------------------------
+4.1  Create the tables (MasterData, Kerala_9_English_Book1_MCQ):
+
+         npx wrangler d1 execute vidya-db --remote --file=./schema.sql
+
+4.2  Load the sample content (30 chapters, 3,000 questions):
+
+         npx wrangler d1 execute vidya-db --remote --file=./seed.sql
+
+4.3  (Optional) Verify the data loaded:
+
+         npx wrangler d1 execute vidya-db --remote --command="SELECT count(*) FROM MasterData"
+         npx wrangler d1 execute vidya-db --remote --command="SELECT count(*) FROM Kerala_9_English_Book1_MCQ"
+
+     You should see 30 and 3000.
+
+--------------------------------------------------------------------
+STEP 5 - Create the Cloudflare Pages project
+--------------------------------------------------------------------
+5.1  Go to the Cloudflare dashboard -> "Workers & Pages" -> "Create"
+     -> "Pages" -> "Connect to Git".
+
+5.2  Authorize Cloudflare to access GitHub if prompted, then select the
+     repository you pushed in Step 1.
+
+5.3  Build settings:
+         Framework preset:        None
+         Build command:           (leave empty)
+         Build output directory:  /
+     (Everything in this project is already static + Functions, so no
+     build step is required.)
+
+5.4  Click "Save and Deploy". Cloudflare will build and publish the
+     site to a temporary address like:
+
+         https://<project-name>.pages.dev
+
+     Open that URL and confirm the Selection Page loads. It's fine if
+     the dropdowns don't show data yet -- the D1 binding is set up next.
+
+--------------------------------------------------------------------
+STEP 6 - Confirm/attach the D1 database binding
+--------------------------------------------------------------------
+The project's "wrangler.toml" already declares the binding, so Cloudflare
+should attach it automatically on deploy. To confirm (or add it by hand
+if the dropdowns aren't loading data):
+
+6.1  In the Pages project, go to "Settings" -> "Functions" -> "D1
+     database bindings".
+
+6.2  Confirm there is a binding named "DB" pointing at "vidya-db" for
+     BOTH the "Production" and "Preview" environments. If it's missing,
+     add it manually with:
+         Variable name:  DB
+         D1 database:    vidya-db
+
+6.3  If you added or changed anything here, go to "Deployments" and
+     re-trigger the latest deployment ("Retry deployment") so the
+     change takes effect.
+
+6.4  Re-open https://<project-name>.pages.dev and confirm the Syllabus
+     dropdown on the Selection Page now populates with data.
+
+--------------------------------------------------------------------
+STEP 7 - Point mystudies.org at this Pages project
+--------------------------------------------------------------------
+Because the domain is already on Cloudflare, this step is just a few
+clicks -- no external DNS registrar to configure.
+
+7.1  In the Pages project, go to "Custom domains" -> "Set up a custom
+     domain".
+
+7.2  Enter:  mystudies.org
+     (Add a second one for  www.mystudies.org  too, if you want both to
+     work -- Cloudflare will offer to set up a redirect between them.)
+
+7.3  Click "Continue" / "Activate domain". Because mystudies.org is
+     already managed in this same Cloudflare account, Cloudflare creates
+     the required DNS record(s) for you automatically -- you do not
+     need to log into a separate registrar.
+
+7.4  Wait for the status to show "Active" (usually a few minutes, can
+     occasionally take longer while SSL certificates issue). Cloudflare
+     provisions HTTPS automatically -- no separate certificate purchase
+     or setup needed.
+
+--------------------------------------------------------------------
+STEP 8 - Verify the live site
+--------------------------------------------------------------------
+8.1  Visit:  https://mystudies.org/healthz
+     Expect:  {"status":"ok"}
+     (If this fails, re-check Step 6 -- it almost always means the D1
+     binding isn't attached.)
+
+8.2  Visit:  https://mystudies.org/
+     Walk through a full quiz: pick a Syllabus/Grade/Medium/Subject/
+     Book/Chapter/Type, press OK, pick one or more sections, press OK,
+     answer all 10 questions, and check the Results/Review screens.
+
+8.3  (Optional) Confirm answers are being recorded in the database:
+
+         npx wrangler d1 execute vidya-db --remote --command="SELECT Id, \"Correct#\", \"Incorrect#\" FROM Kerala_9_English_Book1_MCQ WHERE \"Correct#\" > 0 OR \"Incorrect#\" > 0 LIMIT 5"
+
+--------------------------------------------------------------------
+STEP 9 - Making future updates
+--------------------------------------------------------------------
+- Code/content changes (HTML, CSS, JS, Functions): edit locally, then
+      git add .
+      git commit -m "describe the change"
+      git push
+  Cloudflare redeploys automatically within a minute or two of the push.
+
+- Database changes (new chapters/questions): update schema.sql/seed.sql
+  (or write new SQL) and re-run:
+      npx wrangler d1 execute vidya-db --remote --file=./your-update.sql
+  Database changes take effect immediately -- no redeploy needed.
+
+--------------------------------------------------------------------
+TROUBLESHOOTING
+--------------------------------------------------------------------
+- Dropdowns stay empty on the live site:
+    Almost always the D1 binding (Step 6). Check Settings -> Functions
+    -> D1 database bindings shows "DB" -> "vidya-db" for Production,
+    then retry the deployment.
+
+- "https://mystudies.org" doesn't load / shows a Cloudflare error page:
+    Check "Custom domains" in the Pages project shows "Active". If it's
+    stuck "Pending", double-check mystudies.org's nameservers are fully
+    on Cloudflare (Cloudflare dashboard -> the domain -> Overview should
+    show "Active" there too, not "Pending Nameserver Update").
+
+- 404 on API calls (/api/...):
+    Confirm the repo's folder structure still has a top-level
+    "functions" directory (Cloudflare Pages only turns files under
+    functions/ into API routes) and that "Build output directory" in
+    Step 5.3 is set to "/" and not a subfolder.
+
+- Need to start over on the database:
+    npx wrangler d1 execute vidya-db --remote --file=./schema.sql
+    re-creates the tables (DROP + CREATE), then re-run the seed.sql
+    load from Step 4.2.
+
+--------------------------------------------------------------------
+REFERENCE: what lives where
+--------------------------------------------------------------------
+  index.html, topic_selection.html, question.html,
+  results.html, section_results.html, question_review.html
+                                    - the 6 screens (static HTML)
+  static/css/style.css              - shared styling
+  static/js/*.js                    - page logic (talks to /api/...)
+  functions/api/masterdata.js       - GET  /api/masterdata
+  functions/api/topics.js           - GET  /api/topics?id=
+  functions/api/quiz/start.js       - POST /api/quiz/start
+  functions/api/answer.js           - POST /api/answer
+  functions/healthz.js              - GET  /healthz
+  schema.sql / seed.sql             - one-time D1 setup (Steps 3-4)
+  wrangler.toml                     - project name + D1 binding config
+  README.md                         - full technical notes on this port
