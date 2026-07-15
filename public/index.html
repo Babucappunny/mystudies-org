@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Vidya - Selection Page</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app">
+    <div class="app-header">Vidya</div>
+    <div class="app-subheader">Selection Page</div>
+    <div class="app-body" id="body">
+        <div class="field-row">
+            <div class="field-label">Syllabus</div>
+            <select class="dropdown" id="sel-syllabus"><option value="">-- Select --</option></select>
+        </div>
+        <div class="field-row">
+            <div class="field-label">Grade</div>
+            <select class="dropdown" id="sel-grade" disabled><option value="">-- Select --</option></select>
+        </div>
+        <div class="field-row">
+            <div class="field-label">Medium</div>
+            <select class="dropdown" id="sel-language" disabled><option value="">-- Select --</option></select>
+        </div>
+        <div class="field-row">
+            <div class="field-label">Subject</div>
+            <select class="dropdown" id="sel-subject" disabled><option value="">-- Select --</option></select>
+        </div>
+        <div class="field-row">
+            <div class="field-label">Book</div>
+            <select class="dropdown" id="sel-book" disabled><option value="">-- Select --</option></select>
+        </div>
+        <div class="field-row">
+            <div class="field-label">Chapter</div>
+            <select class="dropdown" id="sel-chapter" disabled><option value="">-- Select --</option></select>
+        </div>
+        <div class="field-row">
+            <div class="field-label">Type</div>
+            <select class="dropdown" id="sel-type" disabled><option value="">-- Select --</option></select>
+        </div>
+    </div>
+    <div class="app-footer">
+        <button class="btn" id="btn-ok" disabled>OK</button>
+    </div>
+</div>
+<script src="/static/js/common.js"></script>
+<script src="/static/js/selector.js"></script>
+</body>
+</html>
