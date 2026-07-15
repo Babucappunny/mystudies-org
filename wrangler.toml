@@ -16,4 +16,4 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "vidya-db"
-database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+database_id = "8616a79d-7a38-4472-aec5-a643cb2cfeba"
