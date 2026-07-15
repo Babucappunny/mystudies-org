@@ -19,12 +19,23 @@
 const SAFE_TABLE_NAME = /^[A-Za-z0-9_]+$/;
 
 function mcqTableName(row) {
+  // NOTE: this used to build the table name from row.Language (the medium
+  // of instruction). That broke once Malayalam-medium chapters (Language =
+  // "മലയാളം") were added alongside the original English-medium ones,
+  // because both actually live in the SAME physical table,
+  // "Kerala_9_English_Book1_MCQ" -- "English" here is just this content
+  // pack's fixed label, not a per-row medium-of-instruction lookup. So the
+  // table name is now derived from Syllabus/Grade/Book#/Type only, with
+  // "English" as a fixed segment matching the one table that actually
+  // exists. If a genuinely different table is ever introduced (e.g. a new
+  // book or a different syllabus), this will need a real per-row lookup
+  // again (ideally via an explicit "Table" column on MasterData rather
+  // than guessing from other fields).
   const syllabus = String(row.Syllabus).trim().replace(/ /g, "_");
   const grade = String(row.Grade).trim();
-  const language = String(row.Language).trim().replace(/ /g, "_");
   const book = String(row["Book#"]).trim();
   const qtype = String(row.Type).trim().replace(/ /g, "_");
-  return `${syllabus}_${grade}_${language}_Book${book}_${qtype}`;
+  return `${syllabus}_${grade}_English_Book${book}_${qtype}`;
 }
 
 async function tableExists(db, tableName) {
