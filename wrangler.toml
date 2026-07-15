@@ -1,10 +1,18 @@
 name = "mystudies-org"
+main = "worker.js"
 compatibility_date = "2025-01-01"
-pages_build_output_dir = "."
 
-# D1 binding used by every function in functions/api/*.js as `env.DB`.
-# `database_id` below is a placeholder -- replace it with the id printed by
-# `wrangler d1 create vidya-db` (see README.md "Deploying" section).
+# Static files (HTML/CSS/JS) served directly from ./public. Cloudflare
+# checks for a matching file in this directory FIRST for every request;
+# worker.js's fetch handler is only invoked when nothing matches (which,
+# in this project, is exactly the /api/* and /healthz routes).
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# D1 binding used by worker.js as `env.DB`. `database_id` below is a
+# placeholder -- replace it with the id printed by
+# `wrangler d1 create vidya-db` (see deployment.txt Step 3).
 [[d1_databases]]
 binding = "DB"
 database_name = "vidya-db"
