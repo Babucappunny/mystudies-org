@@ -1,4 +1,4 @@
-name = "vidya"
+name = "mystudies-org"
 compatibility_date = "2025-01-01"
 pages_build_output_dir = "."
 
@@ -8,4 +8,4 @@ pages_build_output_dir = "."
 [[d1_databases]]
 binding = "DB"
 database_name = "vidya-db"
-database_id = "8616a79d-7a38-4472-aec5-a643cb2cfeba"
+database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
